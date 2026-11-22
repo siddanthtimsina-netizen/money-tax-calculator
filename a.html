@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Money & Tax Calculator</title>
+
+   <style>
+       :root {
+           --primary: #2563eb;
+           --dark: #1e293b;
+           --light: #f8fafc;
+           --border: #cbd5e1;
+       }
+
+       body {
+           font-family: system-ui, -apple-system, sans-serif;
+           line-height: 1.5;
+           color: var(--dark);
+           background-color: var(--light);
+           margin: 0;
+           padding: 22px;
+       }
+
+       .container {
+           max-width: 1200px;
+           margin: 0 auto;
+           display: grid;
+           grid-template-columns: 1fr;
+           gap: 30px;
+       }
+
+       @media (min-width: 768px) {
+           .container {
+               grid-template-columns: 2fr 1fr;
+           }
+
+           .full-width {
+               grid-column: 1 / -1;
+           }
+       }
+
+       .card {
+           background: white;
+           padding: 24px;
+           border-radius: 8px;
+           box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+       }
+
+       .table-responsive {
+           overflow-x: auto;
+       }
+
+       table {
+           width: 100%;
+           border-collapse: collapse;
+           margin-top: 15px;
+           font-size: 0.9rem;
+       }
+
+       th, td {
+           border: 1px solid var(--border);
+           padding: 12px;
+           text-align: left;
+       }
+
+       th {
+           background-color: #f1f5f9;
+           font-weight: 600;
+       }
+
+       .form-grid {
+           display: grid;
+           grid-template-columns: repeat(2, 1fr);
+           gap: 16px;
+       }
+
+       .form-group {
+           display: flex;
+           flex-direction: column;
+       }
+
+       .form-group.full {
+           grid-column: span 2;
+       }
+
+       label {
+           font-size: 0.85rem;
+           font-weight: 600;
+           margin-bottom: 6px;
+       }
+
+       input {
+           padding: 8px 12px;
+           border: 1px solid var(--border);
+           border-radius: 4px;
+           font-size: 1rem;
+       }
+
+       button {
+           background-color: var(--primary);
+           color: white;
+           padding: 10px 20px;
+           border: none;
+           border-radius: 5px;
+           cursor: pointer;
+           font-weight: 600;
+       }
+
+       button:hover {
+           background-color: #1d4ed8;
+       }
+
+       /* GRAPH SECTION */
+       #results {
+           display: none;
+       }
+
+       .chart {
+           display: flex;
+           align-items: flex-end;
+           justify-content: space-around;
+           gap: 15px;
+           height: 350px;
+           padding: 20px;
+           border-bottom: 2px solid var(--border);
+           margin-top: 30px;
+       }
+
+       .bar-container {
+           display: flex;
+           flex-direction: column;
+           align-items: center;
+           justify-content: flex-end;
+           height: 100%;
+           flex: 1;
+       }
+
+       .bar {
+           width: 70%;
+           max-width: 90px;
+           background-color: var(--primary);
+           border-radius: 6px 6px 0 0;
+           transition: height 0.5s;
+           min-height: 3px;
+       }
+
+       .bar-value {
+           font-size: 0.8rem;
+           font-weight: bold;
+           margin-bottom: 8px;
+           text-align: center;
+       }
+
+       .bar-label {
+           margin-top: 10px;
+           font-size: 0.85rem;
+           text-align: center;
+       }
+
+       .summary {
+           display: grid;
+           grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+           gap: 15px;
+           margin-top: 20px;
+       }
+
+       .summary-box {
+           background: #f1f5f9;
+           padding: 18px;
+           border-radius: 8px;
+       }
+
+       .summary-box h3 {
+           margin-top: 0;
+           font-size: 0.9rem;
+       }
+
+       .summary-box p {
+           font-size: 1.4rem;
+           font-weight: bold;
+           margin-bottom: 0;
+       }
+
+       .reset-button {
+           background-color: #64748b;
+           margin-top: 20px;
+       }
+   </style>
+</head>
+
+<body>
+
+<div class="container">
+
+   <!-- HEADER -->
+   <header class="card full-width">
+       <h1>Money & Tax Calculator</h1>
+       <p>Calculate how much money you pay in taxes over time.</p>
+   </header>
+
+   <!-- MONEY AND TAX FORM -->
+   <aside class="card">
+       <h2>Enter Your Information</h2>
+
+       <form id="moneyForm" class="form-grid">
+
+           <div class="form-group full">
+               <label for="money-made">How much money do you make per year?</label>
+               <input
+                   type="number"
+                   id="money-made"
+                   placeholder="Enter amount ($)"
+                   min="0"
+                   step="0.01"
+                   required>
+           </div>
+
+           <div class="form-group full">
+               <label for="tax-paid">How much tax do you pay per year?</label>
+               <input
+                   type="number"
+                   id="tax-paid"
+                   placeholder="Enter tax amount ($)"
+                   min="0"
+                   step="0.01"
+                   required>
+           </div>
+
+           <div class="form-group full">
+               <button type="submit">Calculate & Show Graph</button>
+           </div>
+
+       </form>
+   </aside>
+
+   <!-- RESULTS AND GRAPH -->
+   <main id="results" class="card full-width">
+
+       <h2>Your Tax Over Time</h2>
+
+       <p id="description"></p>
+
+       <div class="summary">
+
+           <div class="summary-box">
+               <h3>Yearly Income</h3>
+               <p id="yearlyIncome">$0</p>
+           </div>
+
+           <div class="summary-box">
+               <h3>Yearly Taxes</h3>
+               <p id="yearlyTax">$0</p>
+           </div>
+
+           <div class="summary-box">
+               <h3>Money Left Per Year</h3>
+               <p id="yearlyNet">$0</p>
+           </div>
+
+           <div class="summary-box">
+               <h3>Taxes Paid in 25 Years</h3>
+               <p id="totalTax25">$0</p>
+           </div>
+
+       </div>
+
+       <h3>Taxes Paid Every 5 Years</h3>
+
+       <div class="chart" id="chart"></div>
+
+       <div class="table-responsive">
+           <table>
+               <thead>
+                   <tr>
+                       <th>Years</th>
+                       <th>Total Income</th>
+                       <th>Total Taxes Paid</th>
+                       <th>Money After Taxes</th>
+                   </tr>
+               </thead>
+
+               <tbody id="tableBody"></tbody>
+           </table>
+       </div>
+
+       <button class="reset-button" onclick="resetCalculator()">Calculate Again</button>
+
+   </main>
+
+   <!-- FOOTER -->
+   <footer class="card full-width">
+       <p>&copy; 2026 Money & Tax Calculator</p>
+   </footer>
+
+</div>
+
+<script>
+   const form = document.getElementById("moneyForm");
+
+   form.addEventListener("submit", function(event) {
+       event.preventDefault();
+
+       const income = Number(document.getElementById("money-made").value);
+       const tax = Number(document.getElementById("tax-paid").value);
+
+       const net = income - tax;
+
+       // Show results section
+       document.getElementById("results").style.display = "block";
+
+       // Display yearly information
+       document.getElementById("yearlyIncome").textContent =
+           formatMoney(income);
+
+       document.getElementById("yearlyTax").textContent =
+           formatMoney(tax);
+
+       document.getElementById("yearlyNet").textContent =
+           formatMoney(net);
+
+       document.getElementById("totalTax25").textContent =
+           formatMoney(tax * 25);
+
+       document.getElementById("description").textContent =
+           "Based on your numbers, this graph shows how much tax you would pay if your yearly income and taxes stayed the same.";
+
+       // Create graph
+       createGraph(income, tax);
+
+       // Scroll to results
+       document.getElementById("results").scrollIntoView({
+           behavior: "smooth"
+       });
+   });
+
+   function formatMoney(amount) {
+       return amount.toLocaleString("en-US", {
+           style: "currency",
+           currency: "USD"
+       });
+   }
+
+   function createGraph(income, tax) {
+       const chart = document.getElementById("chart");
+       const tableBody = document.getElementById("tableBody");
+
+       chart.innerHTML = "";
+       tableBody.innerHTML = "";
+
+       const years = [5, 10, 15, 20, 25];
+
+       // Find the largest tax amount to scale the graph
+       const maxTax = tax * 25;
+
+       years.forEach(function(year) {
+           const totalIncome = income * year;
+           const totalTax = tax * year;
+           const moneyLeft = totalIncome - totalTax;
+
+           // Calculate bar height
+           let height = 0;
+
+           if (maxTax > 0) {
+               height = (totalTax / maxTax) * 100;
+           }
+
+           // Create graph bar
+           const barContainer = document.createElement("div");
+           barContainer.className = "bar-container";
+
+           const value = document.createElement("div");
+           value.className = "bar-value";
+           value.textContent = formatMoney(totalTax);
+
+           const bar = document.createElement("div");
+           bar.className = "bar";
+           bar.style.height = height + "%";
+
+           const label = document.createElement("div");
+           label.className = "bar-label";
+           label.textContent = year + " Years";
+
+           barContainer.appendChild(value);
+           barContainer.appendChild(bar);
+           barContainer.appendChild(label);
+
+           chart.appendChild(barContainer);
+
+           // Create table row
+           const row = document.createElement("tr");
+
+           row.innerHTML = `
+               <td>${year} Years</td>
+               <td>${formatMoney(totalIncome)}</td>
+               <td>${formatMoney(totalTax)}</td>
+               <td>${formatMoney(moneyLeft)}</td>
+           `;
+
+           tableBody.appendChild(row);
+       });
+   }
+
+   function resetCalculator() {
+       document.getElementById("moneyForm").reset();
+
+       document.getElementById("results").style.display = "none";
+
+       window.scrollTo({
+           top: 0,
+           behavior: "smooth"
+       });
+   }
+</script>
+
+</body>
+</html>
+ 
